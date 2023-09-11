@@ -16,8 +16,9 @@ while x < rent.size:
 ### Append the new feature as a new column
 data['Rent per Square Feet'] = rent_per_sq_ft
 ### Pre-processing
-#data = data[['Size', 'Rent per Square Feet','Area Locality', 'Area Type', 'City', 'Tenant Preferred', 'Rent']]
-data = data[['Size', 'Rent per Square Feet', 'Area Type', 'City', 'Tenant Preferred', 'Rent']]
+#data = data[['Size', 'Rent per Square Feet','Floor', 'Area Type', 'City', 'Tenant Preferred', 'Rent']]
+#data = data[['BHK','Size', 'Rent per Square Feet', 'City', 'Bathroom', 'Rent']]
+data = data[['BHK', 'Bathroom', 'Size', 'Rent per Square Feet', 'Area Type', 'City', 'Rent']]
 def one_hot_encode(data, column):
     encoded = pd.get_dummies(data[column], drop_first= True)
     data = data.drop(column, axis = 1)
@@ -30,9 +31,9 @@ def target_encode(data, column, column_label, target):
     return data
 
 #data = one_hot_encode(data, 'Furnishing Status')
-#data = target_encode(data, 'Area Locality', 'Area Locality Target', 'Rent')
+#data = target_encode(data, 'Floor', 'Floor Target', 'Rent')
 data = one_hot_encode(data, 'Area Type')
-data = one_hot_encode(data, 'Tenant Preferred')
+#data = one_hot_encode(data, 'Tenant Preferred')
 data = one_hot_encode(data, 'City')
 ## Remove Rent from the X axis and put into the Y-axis
 X = data.drop('Rent', axis= 1)
@@ -43,28 +44,40 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.2, random
 ## Standardize the Data
 from sklearn.preprocessing import StandardScaler
 sc = StandardScaler()
+X_train2 = X_train
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
+X_train2 = sc.transform(X_train2)
 ## Fitting via gradient descent
 from sklearn import linear_model
 model = linear_model.LinearRegression()
 model.fit(X_train, y_train)
 print("Results of the Gradient Descent: ",model.coef_)
 
-### Quantitative Evaluation
-y_preds = model.predict(X_test)
+### Quantitative Evaluation of the test set
+y_preds_test_set = model.predict(X_test)
 from sklearn.metrics import mean_squared_error, r2_score
 # The coefficients
 print("Coefficients: \n", model.coef_)
 # The mean squared error
-print("Mean squared error: %.2f" % mean_squared_error(y_test, y_preds))
+print("Mean squared error: %.2f" % mean_squared_error(y_test, y_preds_test_set))
 # The coefficient of determination: 1 is perfect prediction
-print("Coefficient of determination: %.2f" % r2_score(y_test, y_preds))
+print("Coefficient of determination: %.2f" % r2_score(y_test, y_preds_test_set))
+
+### Quantitative Evaluation of the training set
+y_preds_train_set = model.predict(X_train2)
+#from sklearn.metrics import mean_squared_error, r2_score
+# The coefficients
+print("Coefficients: \n", model.coef_)
+# The mean squared error
+print("Mean squared error: %.2f" % mean_squared_error(y_train, y_preds_train_set))
+# The coefficient of determination: 1 is perfect prediction
+print("Coefficient of determination: %.2f" % r2_score(y_train, y_preds_train_set))
 
 ### Qualitative Evaluation
 
 #sample_index = 456 #Negative Value?
-sample_index = 384
+sample_index = 456
 sample_data = X.iloc[sample_index]
 print("Sample Data: \n", sample_data)
 print("\nRent: ", y.iloc[sample_index])
